@@ -4,18 +4,27 @@ import { OrderService } from 'src/order/order.service';
 import { Queue } from 'src/common/queue';
 import { Order } from 'src/order/order.dto';
 import { FileLogger } from 'src/common/fileLogger';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class BotService {
     private bots: Map<number, Bot> = new Map();
     private botIdCounter: number = 1;
-    private readonly processTimeInMS = 10000;
+    private readonly processTimeInMS: number;
     private readonly logger = new FileLogger('Bot');
 
     // idle queue holds the bot id for assigning order to idle bots
     private idleQueue: Queue<number> = new Queue<number>();
 
-    constructor(private readonly orderService: OrderService) {}
+    constructor(
+        private readonly orderService: OrderService,
+        private readonly configService: ConfigService,
+    ) {
+        this.processTimeInMS = +this.configService.get<number>(
+            'bot.processingTimeInMS',
+            10000,
+        );
+    }
 
     addBot(): Bot {
         const bot: Bot = {
@@ -104,5 +113,9 @@ export class BotService {
         return Array.from(this.bots.values()).filter(
             (bot) => bot.status === BotStatus.BUSY,
         );
+    }
+
+    getProcessingTimeInMS(): number {
+        return this.processTimeInMS;
     }
 }

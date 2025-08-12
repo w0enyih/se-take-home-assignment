@@ -8,12 +8,13 @@
   "scripts": {
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "test": "jest --config ./jest.config.js",
+    "test": "jest --config ./jest.config.js --verbose",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "inquirer": "^12.9.1",

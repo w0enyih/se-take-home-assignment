@@ -4,6 +4,8 @@ import { BotService } from 'src/bot/bot.service';
 import { OrderService } from 'src/order/order.service';
 import { Order } from 'src/order/order.dto';
 import { Bot } from 'src/bot/bot.dto';
+import { ConfigModule } from '@nestjs/config';
+import configuration from '../../config/configuration';
 
 jest.setTimeout(180000); // 3 minutes
 jest.useFakeTimers();
@@ -12,15 +14,24 @@ describe('DispatcherService', () => {
     let dispatcherService: DispatcherService;
     let orderService: OrderService;
     let botService: BotService;
+    let botProcessingTimeInMS: number;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
+            imports: [
+                ConfigModule.forRoot({
+                    load: [configuration],
+                    isGlobal: true,
+                }),
+            ],
             providers: [DispatcherService, BotService, OrderService],
         }).compile();
 
         orderService = module.get<OrderService>(OrderService);
         botService = module.get<BotService>(BotService);
         dispatcherService = module.get<DispatcherService>(DispatcherService);
+
+        botProcessingTimeInMS = botService.getProcessingTimeInMS();
     });
 
     const validateProcess = (
@@ -107,7 +118,7 @@ describe('DispatcherService', () => {
         );
 
         // fast forward time to complete the job
-        jest.advanceTimersByTime(10000);
+        jest.advanceTimersByTime(botProcessingTimeInMS);
         dispatcherService.safeDispatchOrder();
 
         // bot1 compeleted vipOrder1
@@ -124,7 +135,7 @@ describe('DispatcherService', () => {
         );
 
         // fast forward time to complete the job
-        jest.advanceTimersByTime(10000);
+        jest.advanceTimersByTime(botProcessingTimeInMS);
 
         // bot1 compeleted order1
         expectedPendings = [];
@@ -186,7 +197,7 @@ describe('DispatcherService', () => {
         );
 
         // fast forward time to complete the job
-        jest.advanceTimersByTime(10000);
+        jest.advanceTimersByTime(botProcessingTimeInMS);
         dispatcherService.safeDispatchOrder();
 
         // bot1 compeleted vipOrder1
@@ -246,7 +257,7 @@ describe('DispatcherService', () => {
         );
 
         // fast forward time to complete the job
-        jest.advanceTimersByTime(10000);
+        jest.advanceTimersByTime(botProcessingTimeInMS);
 
         // all bots completed their orders
         expectedPendings = [];
@@ -331,7 +342,7 @@ describe('DispatcherService', () => {
         );
 
         // fast forward time to complete the job
-        jest.advanceTimersByTime(10000);
+        jest.advanceTimersByTime(botProcessingTimeInMS);
 
         expectedPendings = [order1];
         expectedProcessings = [];

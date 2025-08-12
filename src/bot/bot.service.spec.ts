@@ -1,12 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BotService } from './bot.service';
 import { OrderService } from '../order/order.service';
+import { ConfigModule } from '@nestjs/config';
+import configuration from '../../config/configuration';
 
 describe('BotService', () => {
     let service: BotService;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
+            imports: [
+                ConfigModule.forRoot({
+                    load: [configuration],
+                    isGlobal: true,
+                }),
+            ],
             providers: [BotService, OrderService],
         }).compile();
 

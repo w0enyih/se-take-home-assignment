@@ -1,10 +1,6 @@
-<p align="center">
-  <a href="https://nestjs.com/" target="_blank">
-    <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="NestJS Logo" />
-  </a>
-</p>
 
 # 🛠️ Order & Bot Dispatcher CLI
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) ![TypeScript](https://img.shields.io/badge/language-TypeScript-3178c6)
 
 A modular CLI application built with [NestJS](https://nestjs.com/) for managing orders and bots, featuring an automated dispatcher that assigns orders to bots in real time.
 
@@ -41,6 +37,8 @@ See [REQUIREMENT.md](./REQUIREMENT.md) for full assignment requirements and spec
 ## 🗂️ Project Structure
 
 ```
+config/
+  └── configuration.ts
 src/
   ├── bot/
   │     ├── bot.dto.ts
@@ -50,14 +48,13 @@ src/
   │     ├── cli.module.ts
   │     └── cli.service.ts
   ├── common/
-  │     └── fileLogger.ts
+  │     └── queue.ts
   ├── dispatcher/
-  │     ├── dispatcher.module.ts
-  │     └── dispatcher.service.ts
+  │     ...
   ├── order/
-  │     ├── order.module.ts
-  │     └── order.service.ts
+  │     ...
   └── main.ts
+.env
 ```
 
 ---
@@ -70,7 +67,19 @@ src/
 npm install
 ```
 
-### 2. Run the CLI application
+### 2. Configure environment variables
+
+Clone the `.env.example` and rename to `.env` file in the project root (if not present). Example:
+
+```
+# .env
+BOT_PROCESSING_TIME_MS=10000
+DISPATCHER_SLEEP_MS=1000
+```
+
+Adjust the values as needed for your environment.
+
+### 3. Run the CLI application
 
 ```bash
 npm run start
@@ -80,7 +89,17 @@ You will see an interactive menu in your terminal.
 
 ---
 
-## 🖥️ Usage
+## 🖥️ Usage (interactive CLI)
+```
+--- MAIN MENU ---
+? What would you like to do? (Use arrow keys)
+❯ Display
+  New Normal Order
+  New VIP Order
+  + Bot
+  - Bot
+  Exit
+```
 
 - **Display:** View current pending/completed orders and bots (with status)
 - **New Normal Order:** Add a normal order to the queue
@@ -140,15 +159,9 @@ tail -f logs/app.log
 
 ```
 --- MAIN MENU ---
-? What would you like to do? (Use arrow keys)
-❯ New Normal Order
-  New VIP Order
-  + Bot
-  - Bot
-  Display
-  Exit
-
+✔ What would you like to do? Display
 ========================================
+
 
 🟡 PENDING ORDERS:
 ┌─────────┬─────┬──────────┬──────────────────────────┐

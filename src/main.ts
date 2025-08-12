@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { CliModule } from './cli/cli.module';
 
 async function bootstrap() {
-    const app = await NestFactory.createApplicationContext(AppModule);
+    const app = await NestFactory.createApplicationContext(CliModule);
     app.enableShutdownHooks();
 }
 bootstrap();

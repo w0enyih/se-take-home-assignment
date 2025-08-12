@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { BotService } from 'src/bot/bot.service';
 import { FileLogger } from 'src/common/fileLogger';
 import { OrderService } from 'src/order/order.service';
@@ -7,16 +8,24 @@ import { OrderService } from 'src/order/order.service';
 export class DispatcherService {
     private isRunning: boolean = false;
     private timeout?: NodeJS.Timeout;
+    private sleepInMS: number;
     private readonly logger = new FileLogger('Dispatcher');
 
     constructor(
         private readonly orderService: OrderService,
         private readonly botService: BotService,
-    ) {}
+        private readonly configService: ConfigService,
+    ) {
+        this.sleepInMS =
+            this.configService.get<number>('dispatcher.sleepInMS') || 1000;
+    }
 
     start(): void {
         if (!this.timeout) {
-            this.timeout = setInterval(() => this.safeDispatchOrder(), 1000);
+            this.timeout = setInterval(
+                () => this.safeDispatchOrder(),
+                this.sleepInMS,
+            );
         }
     }
 
