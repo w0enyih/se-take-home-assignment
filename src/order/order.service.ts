@@ -1,74 +1,96 @@
 import { Injectable } from '@nestjs/common';
 import { Queue } from '../common/queue';
 import { Order, OrderStatus, OrderType } from './order.dto';
+import { FileLogger } from 'src/common/fileLogger';
 
 @Injectable()
 export class OrderService {
-  // create a queue to hold orders for normal pending, VIP pending, and completed orders
-  private normalQueue: Queue<Order> = new Queue<Order>();
-  private vipQueue: Queue<Order> = new Queue<Order>();
-  private completedOrders: Order[] = [];
+    private readonly logger = new FileLogger(`Order`);
 
-  // counter to generate unique order IDs
-  // this is a simple implementation, in a real-world application, might want to use a more robust ID generation strategy
-  private orderIdCounter = 100;
+    // create a queue to hold orders for normal pending, VIP pending, and completed orders
+    private normalQueue: Queue<Order> = new Queue<Order>();
+    private vipQueue: Queue<Order> = new Queue<Order>();
+    private completedOrders: Order[] = [];
 
-  addNormalOrder(): Order {
-    return this.addOrder(OrderType.NORMAL);
-  }
+    // counter to generate unique order IDs
+    // this is a simple implementation, in a real-world application, might want to use a more robust ID generation strategy
+    private orderIdCounter: number = 100;
 
-  addVIPOrder(): Order {
-    return this.addOrder(OrderType.VIP);
-  }
-
-  private addOrder(type: OrderType): Order {
-    const order: Order = {
-      id: this.orderIdCounter++,
-      type,
-      createdAt: new Date(),
-      processStartAt: null,
-      processEndAt: null,
-      status: OrderStatus.PENDING,
-    };
-
-    if (type === OrderType.VIP) {
-      this.vipQueue.enqueue(order);
-    } else {
-      this.normalQueue.enqueue(order);
+    addNormalOrder(): Order {
+        return this.addOrder(OrderType.NORMAL);
     }
 
-    return order;
-  }
-
-  getNextOrder(): Order | undefined {
-    if (!this.vipQueue.isEmpty()) {
-      return this.vipQueue.dequeue();
-    } else if (!this.normalQueue.isEmpty()) {
-      return this.normalQueue.dequeue();
+    addVIPOrder(): Order {
+        return this.addOrder(OrderType.VIP);
     }
 
-    return undefined;
-  }
+    private addOrder(type: OrderType): Order {
+        const order: Order = {
+            id: this.orderIdCounter++,
+            type: type,
+            createdAt: new Date(),
+            status: OrderStatus.PENDING,
+        };
 
-  completeOrder(order: Order): void {
-    order.status = OrderStatus.COMPLETED;
-    order.processEndAt = new Date();
-    this.completedOrders.push(order);
-  }
+        if (type === OrderType.VIP) {
+            this.vipQueue.enqueue(order);
+        } else {
+            this.normalQueue.enqueue(order);
+        }
 
-  getNormalQueue(): Order[] {
-    return this.normalQueue.getAll();
-  }
+        this.logger.log(`New ${type} order added. #${order.id}`);
+        return order;
+    }
 
-  getVIPQueue(): Order[] {
-    return this.vipQueue.getAll();
-  }
+    hasPendingOrder(): boolean {
+        return !this.normalQueue.isEmpty() || !this.vipQueue.isEmpty();
+    }
 
-  getPendingOrders(): Order[] {
-    return [...this.getVIPQueue(), ...this.getNormalQueue()];
-  }
+    getNextOrder(): Order | undefined {
+        if (!this.vipQueue.isEmpty()) {
+            return this.vipQueue.dequeue();
+        } else if (!this.normalQueue.isEmpty()) {
+            return this.normalQueue.dequeue();
+        }
 
-  getCompletedOrders(): Order[] {
-    return this.completedOrders;
-  }
+        return undefined;
+    }
+
+    completeOrder(order: Order): void {
+        order.status = OrderStatus.COMPLETED;
+        order.processEndAt = new Date();
+        this.completedOrders.push(order);
+        this.logger.log(`Order #${order.id} completed by bot ${order?.botId}.`);
+    }
+
+    requeueOrder(order: Order): void {
+        order.status = OrderStatus.PENDING;
+        order.botId = undefined;
+        order.processStartAt = undefined;
+        order.processEndAt = undefined;
+
+        if (order.type === OrderType.VIP) {
+            this.vipQueue.enqueueTop(order);
+        } else {
+            this.normalQueue.enqueueTop(order);
+        }
+
+        this.logger.log(`Order #${order.id} requeued.`);
+    }
+
+    getNormalQueue(): Order[] {
+        return this.normalQueue.getAll();
+    }
+
+    getVIPQueue(): Order[] {
+        return this.vipQueue.getAll();
+    }
+
+    getPendingOrders(): Order[] {
+        return [...this.getVIPQueue(), ...this.getNormalQueue()];
+    }
+
+    getCompletedOrders(): Order[] {
+        return this.completedOrders;
+    }
 }

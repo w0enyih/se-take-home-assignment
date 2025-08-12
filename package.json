@@ -1,16 +1,16 @@
 {
   "name": "se-take-home-assignment",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "A NestJS CLI application for managing orders and bots",
+  "author": "wyleong",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest --config ./jest.config.js"
+    "test": "jest --config ./jest.config.js",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

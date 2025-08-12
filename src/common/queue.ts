@@ -1,31 +1,38 @@
 export class Queue<T> {
-  private items: T[] = [];
+    private items: T[] = [];
 
-  enqueue(item: T): void {
-    this.items.push(item);
-  }
+    enqueue(item: T): void {
+        this.items.push(item);
+    }
 
-  dequeue(): T | undefined {
-    return this.items.shift();
-  }
+    enqueueTop(item: T): void {
+        this.items.unshift(item);
+    }
 
-  peek(): T | undefined {
-    return this.items[0];
-  }
+    dequeue(): T | undefined {
+        return this.items.shift();
+    }
 
-  isEmpty(): boolean {
-    return this.items.length === 0;
-  }
+    delete(item: T): void {
+        const index = this.items.indexOf(item);
+        if (index !== -1) {
+            this.items.splice(index, 1);
+        }
+    }
 
-  size(): number {
-    return this.items.length;
-  }
+    size(): number {
+        return this.items.length;
+    }
 
-  clear(): void {
-    this.items = [];
-  }
+    isEmpty(): boolean {
+        return this.size() === 0;
+    }
 
-  getAll(): T[] {
-    return [...this.items];
-  }
+    clear(): void {
+        this.items = [];
+    }
+
+    getAll(): T[] {
+        return [...this.items];
+    }
 }
