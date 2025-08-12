@@ -1,98 +1,188 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <a href="https://nestjs.com/" target="_blank">
+    <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="NestJS Logo" />
+  </a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# 🛠️ Order & Bot Dispatcher CLI
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+A modular CLI application built with [NestJS](https://nestjs.com/) for managing orders and bots, featuring an automated dispatcher that assigns orders to bots in real time.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📄 Requirements
 
-## Project setup
+See [REQUIREMENT.md](./REQUIREMENT.md) for full assignment requirements and specifications.
 
-```bash
-$ npm install
+---
+
+## 🚀 Features
+
+- **Order Management:**  
+  - Add normal and VIP orders  
+  - View pending and completed orders  
+- **Bot Management:**  
+  - Add or remove bots  
+  - View bot status (idle/busy)  
+- **Automated Dispatcher:**  
+  - Assigns pending orders to available bots automatically  
+- **Interactive CLI:**  
+  - User-friendly menu for all operations  
+- **Singleton Services:**  
+  - Shared state across modules (OrderService, BotService, DispatcherService)  
+- **Logging:**  
+  - File-based logging for dispatcher and bots  
+  - Console output for CLI actions  
+- **Testing:**  
+  - Jest-based unit tests for core logic  
+
+---
+
+## 🗂️ Project Structure
+
+```
+src/
+  ├── bot/
+  │     ├── bot.dto.ts
+  │     ├── bot.module.ts
+  │     └── bot.service.ts
+  ├── cli/
+  │     ├── cli.module.ts
+  │     └── cli.service.ts
+  ├── common/
+  │     └── fileLogger.ts
+  ├── dispatcher/
+  │     ├── dispatcher.module.ts
+  │     └── dispatcher.service.ts
+  ├── order/
+  │     ├── order.module.ts
+  │     └── order.service.ts
+  └── main.ts
 ```
 
-## Compile and run the project
+---
+
+## 🏁 Getting Started
+
+### 1. Install dependencies
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+### 2. Run the CLI application
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run start
 ```
 
-## Deployment
+You will see an interactive menu in your terminal.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+---
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 🖥️ Usage
+
+- **Display:** View current pending/completed orders and bots (with status)
+- **New Normal Order:** Add a normal order to the queue
+- **New VIP Order:** Add a VIP order (higher priority)
+- **+ Bot:** Add a new bot (idle, ready to process orders)
+- **- Bot:** Remove the newest bot (requeues its order if busy)
+- **Exit:** Quit the application
+
+Orders are automatically dispatched to idle bots by the dispatcher service.
+
+---
+
+## 🧩 Module & Singleton Design
+
+All core services (`OrderService`, `BotService`, `DispatcherService`) are provided as singletons via their respective modules.
+
+**Best Practice:**  
+- **Do NOT provide these services directly in multiple modules.**  
+- Instead, import their modules to ensure a single shared instance.
+
+**Example:**
+
+```typescript
+// cli.module.ts
+@Module({
+  imports: [OrderModule, BotModule, DispatcherModule],
+  providers: [CliService],
+})
+export class CliModule {}
+```
+
+---
+
+## 🧪 Testing
+
+Run all unit tests:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run test
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## 📋 Logging
 
-Check out a few resources that may come in handy when working with NestJS:
+- **Dispatcher and Bot logs:** Written to files via `FileLogger`
+- **CLI actions and status:** Printed to the console
+- **View logs in real time:**
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+tail -f logs/app.log
+```
 
-## Support
+---
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 📊 Example Output
 
-## Stay in touch
+```
+--- MAIN MENU ---
+? What would you like to do? (Use arrow keys)
+❯ New Normal Order
+  New VIP Order
+  + Bot
+  - Bot
+  Display
+  Exit
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+========================================
 
-## License
+🟡 PENDING ORDERS:
+┌─────────┬─────┬──────────┬──────────────────────────┐
+│ (index) │ id  │ type     │ createdAt                │
+├─────────┼─────┼──────────┼──────────────────────────┤
+│ 0       │ 105 │ 'NORMAL' │ 2025-08-12T13:13:41.963Z │
+└─────────┴─────┴──────────┴──────────────────────────┘
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+🟢 COMPLETED ORDERS:
+┌─────────┬─────┬──────────┬───────┬──────────────────────────┬──────────────────────────┬──────────────────────────┐
+│ (index) │ id  │ type     │ botId │ createdAt                │ processStartAt           │ processEndAt             │
+├─────────┼─────┼──────────┼───────┼──────────────────────────┼──────────────────────────┼──────────────────────────┤
+│ 0       │ 101 │ 'VIP'    │ 1     │ 2025-08-12T13:12:44.277Z │ 2025-08-12T13:12:49.974Z │ 2025-08-12T13:12:59.976Z │
+│ 1       │ 100 │ 'NORMAL' │ 2     │ 2025-08-12T13:12:42.866Z │ 2025-08-12T13:12:52.552Z │ 2025-08-12T13:13:02.552Z │
+│ 2       │ 102 │ 'NORMAL' │ 1     │ 2025-08-12T13:12:58.401Z │ 2025-08-12T13:13:00.012Z │ 2025-08-12T13:13:10.014Z │
+│ 3       │ 103 │ 'VIP'    │ 2     │ 2025-08-12T13:13:00.045Z │ 2025-08-12T13:13:03.013Z │ 2025-08-12T13:13:13.013Z │
+└─────────┴─────┴──────────┴───────┴──────────────────────────┴──────────────────────────┴──────────────────────────┘
+
+BOTS:
+┌─────────┬────┬────────┬─────────┬───────────┬──────────────────────────┐
+│ (index) │ id │ status │ orderId │ orderType │ orderProcessStartAt      │
+├─────────┼────┼────────┼─────────┼───────────┼──────────────────────────┤
+│ 0       │ 1  │ 'BUSY' │ 104     │ 'VIP'     │ 2025-08-12T13:13:34.841Z │
+└─────────┴────┴────────┴─────────┴───────────┴──────────────────────────┘
+
+```
+
+---
+
+## 📚 Resources
+
+- [NestJS Documentation](https://docs.nestjs.com)
+- [NestJS Devtools](https://devtools.nestjs.com)
+
+---
+
+##
