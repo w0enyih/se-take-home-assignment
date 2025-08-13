@@ -5,9 +5,11 @@ import { DispatcherModule } from 'src/dispatcher/dispatcher.module';
 import { CliService } from './cli.service';
 import { ConfigModule } from '@nestjs/config';
 import configuration from 'config/configuration';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
     imports: [
+        EventEmitterModule.forRoot(),
         ConfigModule.forRoot({
             load: [configuration],
             isGlobal: true,

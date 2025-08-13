@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Queue } from '../common/queue';
+import * as OrderDto from './order.dto';
 import { Order, OrderStatus, OrderType } from './order.dto';
 import { FileLogger } from 'src/common/fileLogger';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class OrderService {
@@ -15,6 +17,8 @@ export class OrderService {
     // counter to generate unique order IDs
     // this is a simple implementation, in a real-world application, might want to use a more robust ID generation strategy
     private orderIdCounter: number = 101;
+
+    constructor(private readonly eventEmitter: EventEmitter2) {}
 
     addNormalOrder(): Order {
         return this.addOrder(OrderType.NORMAL);
@@ -39,6 +43,7 @@ export class OrderService {
         }
 
         this.logger.log(`New ${type} order. #${order.id}`);
+        this.eventEmitter.emit('order.created');
         return order;
     }
 
@@ -56,14 +61,25 @@ export class OrderService {
         return undefined;
     }
 
+    @OnEvent('order.complete')
+    handleOrderCompleteEvent(order: OrderDto.Order): void {
+        this.completeOrder(order);
+    }
+
     completeOrder(order: Order): void {
         order.status = OrderStatus.COMPLETED;
         order.processEndAt = new Date();
         this.completedOrders.push(order);
         this.logger.log(`Order #${order.id} completed by bot ${order?.botId}.`);
+        this.eventEmitter.emit('order.completed');
     }
 
-    requeueOrder(order: Order): void {
+    @OnEvent('order.requeue')
+    handleOrderRequeueEvent(order: OrderDto.Order): void {
+        this.requeueOrder(order);
+    }
+
+    requeueOrder(order: OrderDto.Order): void {
         order.status = OrderStatus.PENDING;
         order.botId = undefined;
         order.processStartAt = undefined;
@@ -76,6 +92,7 @@ export class OrderService {
         }
 
         this.logger.log(`Order #${order.id} requeued.`);
+        this.eventEmitter.emit('order.requeued');
     }
 
     getNormalQueue(): Order[] {

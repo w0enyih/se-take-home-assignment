@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { OnEvent } from '@nestjs/event-emitter';
 import { BotService } from 'src/bot/bot.service';
 import { FileLogger } from 'src/common/fileLogger';
 import { OrderService } from 'src/order/order.service';
@@ -12,8 +12,15 @@ export class DispatcherService {
     constructor(
         private readonly orderService: OrderService,
         private readonly botService: BotService,
-        private readonly configService: ConfigService,
     ) {}
+
+    @OnEvent('bot.added')
+    @OnEvent('bot.idle')
+    @OnEvent('order.created')
+    @OnEvent('order.requeued')
+    handleTriggerDispatch(): void {
+        return this.safeDispatchOrder();
+    }
 
     safeDispatchOrder(): void {
         // Prevent multiple dispatches at the same time
@@ -61,26 +68,7 @@ export class DispatcherService {
             }
 
             // assign the next order to the idle bot
-            this.botService.assignOrder(idleBot, nextOrder, () =>
-                this.safeDispatchOrder(),
-            );
-        }
-    }
-
-    async executeAndDispatch<T>(
-        fn: () => T | Promise<T>,
-    ): Promise<T | undefined> {
-        try {
-            const result = await Promise.resolve(fn()); // handles sync or async fn
-            this.safeDispatchOrder();
-            return result;
-        } catch (err) {
-            if (err instanceof Error) {
-                this.logger.error('An error occurred:', err.message);
-            } else {
-                this.logger.error('An unexpected error occurred:', String(err));
-            }
-            return undefined;
+            this.botService.assignOrder(idleBot, nextOrder);
         }
     }
 }

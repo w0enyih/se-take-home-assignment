@@ -7,6 +7,26 @@ A modular CLI application built with [NestJS](https://nestjs.com/) for managing 
 
 See [REQUIREMENT.md](./REQUIREMENT.md) for full assignment requirements and specifications.
 
+## Event-Driven Architecture
+This system uses `@nestjs/event-emitter` to decouple components.
+Instead of services calling each other directly, **events are emitted and subscribed to**, allowing for cleaner, scalable logic.
+
+Example Event Flow:
+
+```
+[order.complete] → Order listens and process complete → [order.completed]
+[order.requeue]  → Order listens and process requeue → [order.requeued]
+[order.created]  → Dispatcher listens → safeDispatchOrder()
+[order.requeued] → Dispatcher listens → safeDispatchOrder()
+[bot.added]      → Dispatcher listens → safeDispatchOrder()
+[bot.idle]       → Dispatcher listens → safeDispatchOrder()
+```
+
+**Key Benefits:**
+- No tight coupling between modules
+- Automatic reaction to system state changes
+- Easy to add new listeners (e.g., for analytics or logging)
+
 ## Features
 - Add/view normal and VIP orders  
 - Add/remove bots and check their status  

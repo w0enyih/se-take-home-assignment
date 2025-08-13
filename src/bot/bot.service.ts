@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Bot, BotStatus } from './bot.dto';
-import { OrderService } from 'src/order/order.service';
 import { Queue } from 'src/common/queue';
 import { Order } from 'src/order/order.dto';
 import { FileLogger } from 'src/common/fileLogger';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class BotService {
@@ -17,8 +17,8 @@ export class BotService {
     private idleQueue: Queue<number> = new Queue<number>();
 
     constructor(
-        private readonly orderService: OrderService,
         private readonly configService: ConfigService,
+        private readonly eventEmitter: EventEmitter2,
     ) {
         this.processTimeInMS = +this.configService.get<number>(
             'bot.processingTimeInMS',
@@ -35,6 +35,7 @@ export class BotService {
         this.bots.set(bot.id, bot);
         this.idleQueue.enqueue(bot.id);
         this.logger.log(`New bot ${bot.id}`);
+        this.eventEmitter.emit('bot.added');
         return bot;
     }
 
@@ -58,13 +59,13 @@ export class BotService {
         this.idleQueue.delete(newestBotId);
 
         if (newestBot.currentOrder) {
-            this.orderService.requeueOrder(newestBot.currentOrder);
+            this.eventEmitter.emit('order.requeue', newestBot.currentOrder);
         }
         this.logger.log(`Deleted bot ${newestBotId}`);
         return newestBot;
     }
 
-    assignOrder(bot: Bot, order: Order, callback?: () => void) {
+    assignOrder(bot: Bot, order: Order) {
         if (!bot || !order) {
             this.logger.error('assignOrder called with invalid bot or order');
             return;
@@ -82,13 +83,13 @@ export class BotService {
 
         bot.timeout = setTimeout(() => {
             this.onJobComplete(bot);
-            callback?.();
         }, this.processTimeInMS);
     }
 
     onJobComplete(bot: Bot): void {
         if (bot.currentOrder) {
-            this.orderService.completeOrder(bot.currentOrder);
+            // this.orderService.completeOrder(bot.currentOrder);
+            this.eventEmitter.emit('order.complete', bot.currentOrder);
         }
 
         bot.currentOrder = undefined;
@@ -96,6 +97,7 @@ export class BotService {
         bot.timeout = undefined;
         this.idleQueue.enqueue(bot.id);
         this.logger.log(`bot ${bot.id} is IDLE`);
+        this.eventEmitter.emit('bot.idle');
     }
 
     getBots(): Bot[] {

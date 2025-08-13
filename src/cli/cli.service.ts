@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import inquirer from 'inquirer';
-import { isFunction } from 'rxjs/internal/util/isFunction';
 import { BotService } from 'src/bot/bot.service';
 import { FileLogger } from 'src/common/fileLogger';
 import { DispatcherService } from 'src/dispatcher/dispatcher.service';
@@ -31,37 +30,24 @@ export class CliService {
     async menu() {
         console.log('--- MAIN MENU ---');
         const action = await this.getAnswer();
-        let execFunction: (() => void) | undefined;
 
         switch (action) {
             case 'New Normal Order':
-                execFunction = () => {
-                    this.orderService.addNormalOrder();
-                };
+                this.orderService.addNormalOrder();
                 break;
             case 'New VIP Order':
-                execFunction = () => {
-                    this.orderService.addVIPOrder();
-                };
+                this.orderService.addVIPOrder();
                 break;
             case '+ Bot':
-                execFunction = () => {
-                    this.botService.addBot();
-                };
+                this.botService.addBot();
                 break;
             case '- Bot':
-                execFunction = () => {
-                    this.botService.removeNewestBot();
-                };
+                this.botService.removeNewestBot();
                 break;
             case 'Display':
                 break;
             case 'Exit':
                 process.exit(0);
-        }
-
-        if (execFunction && isFunction(execFunction)) {
-            await this.dispatcherService.executeAndDispatch(execFunction);
         }
 
         this.displayStatus();
