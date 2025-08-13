@@ -7,7 +7,6 @@ import { Bot } from 'src/bot/bot.dto';
 import { ConfigModule } from '@nestjs/config';
 import configuration from '../../config/configuration';
 
-jest.setTimeout(180000); // 3 minutes
 jest.useFakeTimers();
 
 describe('DispatcherService', () => {
@@ -171,17 +170,6 @@ describe('DispatcherService', () => {
 
         // add a bot
         const bot1 = botService.addBot();
-        expectedPendings = [vipOrder1, vipOrder2, order1, order2];
-        expectedProcessings = [];
-        expectedcompleteds = [];
-        expectedBots = [bot1];
-        validateProcess(
-            expectedPendings,
-            expectedProcessings,
-            expectedcompleteds,
-            expectedBots,
-        );
-
         dispatcherService.safeDispatchOrder();
 
         // bot1 processing vipOrder1
@@ -198,7 +186,6 @@ describe('DispatcherService', () => {
 
         // fast forward time to complete the job
         jest.advanceTimersByTime(botProcessingTimeInMS);
-        dispatcherService.safeDispatchOrder();
 
         // bot1 compeleted vipOrder1
         // bot1 processing vipOrder2
@@ -213,17 +200,12 @@ describe('DispatcherService', () => {
             expectedBots,
         );
 
-        dispatcherService.safeDispatchOrder();
-
-        // add delay
-        jest.advanceTimersByTime(1000);
-
         // add another bot
         const bot2 = botService.addBot();
         dispatcherService.safeDispatchOrder();
 
         // bot1 processing vipOrder2
-        // bot2 compeleted Order1
+        // bot2 processing Order1
         expectedPendings = [order2];
         expectedProcessings = [vipOrder2, order1];
         expectedcompleteds = [vipOrder1];
@@ -344,10 +326,127 @@ describe('DispatcherService', () => {
         // fast forward time to complete the job
         jest.advanceTimersByTime(botProcessingTimeInMS);
 
-        expectedPendings = [order1];
-        expectedProcessings = [];
+        expectedPendings = [];
+        expectedProcessings = [order1];
         expectedcompleteds = [vipOrder1, vipOrder2];
         expectedBots = [bot1, bot3];
+        validateProcess(
+            expectedPendings,
+            expectedProcessings,
+            expectedcompleteds,
+            expectedBots,
+        );
+    });
+
+    it('should be execute and dispatch order', async () => {
+        // add 2 normal and 2 VIP orders
+        const order1 = orderService.addNormalOrder();
+        const vipOrder1 = orderService.addVIPOrder();
+        const order2 = orderService.addNormalOrder();
+        const vipOrder2 = orderService.addVIPOrder();
+
+        // validate initial state
+        let expectedPendings = [vipOrder1, vipOrder2, order1, order2];
+        let expectedProcessings = [];
+        let expectedcompleteds = [];
+        let expectedBots = [];
+        validateProcess(
+            expectedPendings,
+            expectedProcessings,
+            expectedcompleteds,
+            expectedBots,
+        );
+
+        // spy the safeDispatchOrder method has been called
+        const safeDispatchSpy = jest.spyOn(
+            dispatcherService,
+            'safeDispatchOrder',
+        );
+
+        // add a bot
+        const bot1 = await dispatcherService.executeAndDispatch(() =>
+            botService.addBot(),
+        );
+        expect(safeDispatchSpy).toHaveBeenCalled();
+
+        // bot1 processing vipOrder1
+        expectedPendings = [vipOrder2, order1, order2];
+        expectedProcessings = [vipOrder1];
+        expectedcompleteds = [];
+        expectedBots = [bot1];
+        validateProcess(
+            expectedPendings,
+            expectedProcessings,
+            expectedcompleteds,
+            expectedBots,
+        );
+
+        // fast forward time to complete the job
+        jest.advanceTimersByTime(botProcessingTimeInMS);
+
+        // bot1 compeleted vipOrder1
+        // bot1 processing vipOrder2
+        expectedPendings = [order1, order2];
+        expectedProcessings = [vipOrder2];
+        expectedcompleteds = [vipOrder1];
+        expectedBots = [bot1];
+        validateProcess(
+            expectedPendings,
+            expectedProcessings,
+            expectedcompleteds,
+            expectedBots,
+        );
+
+        // add another bot
+        const bot2 = await dispatcherService.executeAndDispatch(() =>
+            botService.addBot(),
+        );
+        expect(safeDispatchSpy).toHaveBeenCalled();
+
+        // bot1 processing vipOrder2
+        // bot2 processing Order1
+        expectedPendings = [order2];
+        expectedProcessings = [vipOrder2, order1];
+        expectedcompleteds = [vipOrder1];
+        expectedBots = [bot1, bot2];
+        validateProcess(
+            expectedPendings,
+            expectedProcessings,
+            expectedcompleteds,
+            expectedBots,
+        );
+
+        // add delay
+        jest.advanceTimersByTime(1000);
+
+        // add another bot
+        const bot3 = await dispatcherService.executeAndDispatch(() =>
+            botService.addBot(),
+        );
+        expect(safeDispatchSpy).toHaveBeenCalled();
+
+        // bot1 processing vipOrder2
+        // bot2 processing Order1
+        // bot3 processing Order2
+        expectedPendings = [];
+        expectedProcessings = [vipOrder2, order1, order2];
+        expectedcompleteds = [vipOrder1];
+        expectedBots = [bot1, bot2, bot3];
+        validateProcess(
+            expectedPendings,
+            expectedProcessings,
+            expectedcompleteds,
+            expectedBots,
+        );
+
+        // fast forward time to complete the job
+        jest.advanceTimersByTime(botProcessingTimeInMS);
+
+        // all bots completed their orders
+        expectedPendings = [];
+        expectedProcessings = [];
+        expectedcompleteds = [vipOrder1, vipOrder2, order1, order2];
+        expectedBots = [bot1, bot2, bot3];
         validateProcess(
             expectedPendings,
             expectedProcessings,

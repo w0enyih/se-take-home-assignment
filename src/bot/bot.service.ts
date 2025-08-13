@@ -34,7 +34,7 @@ export class BotService {
 
         this.bots.set(bot.id, bot);
         this.idleQueue.enqueue(bot.id);
-        this.logger.log(`Added new bot ${bot.id}`);
+        this.logger.log(`New bot ${bot.id}`);
         return bot;
     }
 
@@ -60,11 +60,20 @@ export class BotService {
         if (newestBot.currentOrder) {
             this.orderService.requeueOrder(newestBot.currentOrder);
         }
-        this.logger.log(`Deleted bot${newestBotId}`);
+        this.logger.log(`Deleted bot ${newestBotId}`);
         return newestBot;
     }
 
-    assignOrder(bot: Bot, order: Order) {
+    assignOrder(bot: Bot, order: Order, callback?: () => void) {
+        if (!bot || !order) {
+            this.logger.error('assignOrder called with invalid bot or order');
+            return;
+        }
+
+        if (bot.timeout) {
+            clearTimeout(bot.timeout);
+        }
+
         bot.currentOrder = order;
         bot.currentOrder.botId = bot.id;
         bot.currentOrder.processStartAt = new Date();
@@ -73,6 +82,7 @@ export class BotService {
 
         bot.timeout = setTimeout(() => {
             this.onJobComplete(bot);
+            callback?.();
         }, this.processTimeInMS);
     }
 
@@ -85,6 +95,7 @@ export class BotService {
         bot.status = BotStatus.IDLE;
         bot.timeout = undefined;
         this.idleQueue.enqueue(bot.id);
+        this.logger.log(`bot ${bot.id} is IDLE`);
     }
 
     getBots(): Bot[] {

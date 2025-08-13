@@ -14,7 +14,7 @@ export class OrderService {
 
     // counter to generate unique order IDs
     // this is a simple implementation, in a real-world application, might want to use a more robust ID generation strategy
-    private orderIdCounter: number = 100;
+    private orderIdCounter: number = 101;
 
     addNormalOrder(): Order {
         return this.addOrder(OrderType.NORMAL);
@@ -38,7 +38,7 @@ export class OrderService {
             this.normalQueue.enqueue(order);
         }
 
-        this.logger.log(`New ${type} order added. #${order.id}`);
+        this.logger.log(`New ${type} order. #${order.id}`);
         return order;
     }
 

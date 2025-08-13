@@ -7,34 +7,13 @@ import { OrderService } from 'src/order/order.service';
 @Injectable()
 export class DispatcherService {
     private isRunning: boolean = false;
-    private timeout?: NodeJS.Timeout;
-    private sleepInMS: number;
     private readonly logger = new FileLogger('Dispatcher');
 
     constructor(
         private readonly orderService: OrderService,
         private readonly botService: BotService,
         private readonly configService: ConfigService,
-    ) {
-        this.sleepInMS =
-            this.configService.get<number>('dispatcher.sleepInMS') || 1000;
-    }
-
-    start(): void {
-        if (!this.timeout) {
-            this.timeout = setInterval(
-                () => this.safeDispatchOrder(),
-                this.sleepInMS,
-            );
-        }
-    }
-
-    stop(): void {
-        if (this.timeout) {
-            clearInterval(this.timeout);
-            this.timeout = undefined;
-        }
-    }
+    ) {}
 
     safeDispatchOrder(): void {
         // Prevent multiple dispatches at the same time
@@ -47,7 +26,7 @@ export class DispatcherService {
         try {
             this.dispatchOrders();
         } catch (error) {
-            this.logger.error('Error during order dispatch:', error);
+            this.logger.error('Error during order dispatch:', String(error));
         } finally {
             this.isRunning = false;
         }
@@ -82,7 +61,26 @@ export class DispatcherService {
             }
 
             // assign the next order to the idle bot
-            this.botService.assignOrder(idleBot, nextOrder);
+            this.botService.assignOrder(idleBot, nextOrder, () =>
+                this.safeDispatchOrder(),
+            );
+        }
+    }
+
+    async executeAndDispatch<T>(
+        fn: () => T | Promise<T>,
+    ): Promise<T | undefined> {
+        try {
+            const result = await Promise.resolve(fn()); // handles sync or async fn
+            this.safeDispatchOrder();
+            return result;
+        } catch (err) {
+            if (err instanceof Error) {
+                this.logger.error('An error occurred:', err.message);
+            } else {
+                this.logger.error('An unexpected error occurred:', String(err));
+            }
+            return undefined;
         }
     }
 }

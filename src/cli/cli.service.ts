@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import inquirer from 'inquirer';
+import { isFunction } from 'rxjs/internal/util/isFunction';
 import { BotService } from 'src/bot/bot.service';
+import { FileLogger } from 'src/common/fileLogger';
 import { DispatcherService } from 'src/dispatcher/dispatcher.service';
 import { OrderService } from 'src/order/order.service';
 
 @Injectable()
 export class CliService {
+    private readonly logger = new FileLogger(`Order`);
+
     private readonly menuOptions = [
         'Display',
         'New Normal Order',
@@ -20,29 +24,35 @@ export class CliService {
         private readonly botService: BotService,
         private readonly dispatcherService: DispatcherService,
     ) {
-        this.dispatcherService.start();
+        this.logger.log(`CLI app started`);
         this.menu();
     }
 
     async menu() {
         console.log('--- MAIN MENU ---');
         const action = await this.getAnswer();
+        let execFunction: (() => void) | undefined;
 
         switch (action) {
             case 'New Normal Order':
-                this.orderService.addNormalOrder();
-                this.dispatcherService.safeDispatchOrder();
+                execFunction = () => {
+                    this.orderService.addNormalOrder();
+                };
                 break;
             case 'New VIP Order':
-                this.orderService.addVIPOrder();
-                this.dispatcherService.safeDispatchOrder();
+                execFunction = () => {
+                    this.orderService.addVIPOrder();
+                };
                 break;
             case '+ Bot':
-                this.botService.addBot();
-                this.dispatcherService.safeDispatchOrder();
+                execFunction = () => {
+                    this.botService.addBot();
+                };
                 break;
             case '- Bot':
-                this.botService.removeNewestBot();
+                execFunction = () => {
+                    this.botService.removeNewestBot();
+                };
                 break;
             case 'Display':
                 break;
@@ -50,7 +60,11 @@ export class CliService {
                 process.exit(0);
         }
 
-        this.printStatus();
+        if (execFunction && isFunction(execFunction)) {
+            await this.dispatcherService.executeAndDispatch(execFunction);
+        }
+
+        this.displayStatus();
         this.menu();
     }
 
@@ -67,7 +81,7 @@ export class CliService {
 
             return action;
         } catch (err) {
-            if (err?.name === 'ExitPromptError') {
+            if ((err as Error)?.name === 'ExitPromptError') {
                 console.log(
                     'Prompt aborted by user (Ctrl+C). Exiting gracefully.',
                 );
@@ -80,11 +94,12 @@ export class CliService {
         return undefined;
     }
 
-    printStatus() {
+    displayStatus() {
         const pending = this.orderService.getPendingOrders();
         const completed = this.orderService.getCompletedOrders();
 
         console.log('========================================');
+        console.log(new Date().toISOString());
 
         console.log('\n🟡 PENDING ORDERS:');
         if (pending.length === 0) {

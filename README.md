@@ -1,95 +1,67 @@
-
 # 🛠️ Order & Bot Dispatcher CLI
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) ![TypeScript](https://img.shields.io/badge/language-TypeScript-3178c6)
 
-A modular CLI application built with [NestJS](https://nestjs.com/) for managing orders and bots, featuring an automated dispatcher that assigns orders to bots in real time.
+A modular CLI application built with [NestJS](https://nestjs.com/) for managing restaurant orders and cooking bots, featuring an automated dispatcher that assigns orders to bots in real time.
 
----
-
-## 📄 Requirements
+## Requirements
 
 See [REQUIREMENT.md](./REQUIREMENT.md) for full assignment requirements and specifications.
 
----
+## Features
+- Add/view normal and VIP orders  
+- Add/remove bots and check their status  
+- Automatic order dispatching to idle bots  
+- Interactive CLI menu  
+- Shared singleton services  
+- File logging and console output  
+- Jest unit tests included
 
-## 🚀 Features
-
-- **Order Management:**  
-  - Add normal and VIP orders  
-  - View pending and completed orders  
-- **Bot Management:**  
-  - Add or remove bots  
-  - View bot status (idle/busy)  
-- **Automated Dispatcher:**  
-  - Assigns pending orders to available bots automatically  
-- **Interactive CLI:**  
-  - User-friendly menu for all operations  
-- **Singleton Services:**  
-  - Shared state across modules (OrderService, BotService, DispatcherService)  
-- **Logging:**  
-  - File-based logging for dispatcher and bots  
-  - Console output for CLI actions  
-- **Testing:**  
-  - Jest-based unit tests for core logic  
-
----
-
-## 🗂️ Project Structure
+## Project Structure
 
 ```
-config/
-  └── configuration.ts
 src/
-  ├── bot/
-  │     ├── bot.dto.ts
-  │     ├── bot.module.ts
-  │     └── bot.service.ts
-  ├── cli/
-  │     ├── cli.module.ts
-  │     └── cli.service.ts
-  ├── common/
-  │     └── queue.ts
-  ├── dispatcher/
-  │     ...
-  ├── order/
-  │     ...
-  └── main.ts
-.env
+  main.ts
+  bot/
+    bot.dto.ts
+    bot.module.ts
+    bot.service.ts
+    bot.service.spec.ts
+  cli/
+    ...
+  common/
+    ...
+  dispatcher/
+    ...
+  order/
+    ...
 ```
 
----
 
-## 🏁 Getting Started
+## Getting Started
 
-### 1. Install dependencies
+1. **Install dependencies**
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-### 2. Configure environment variables
+2. **Configure environment variables**
 
-Clone the `.env.example` and rename to `.env` file in the project root (if not present). Example:
+   Copy `.env.example` to `.env` and adjust as needed:
 
-```
-# .env
-BOT_PROCESSING_TIME_MS=10000
-DISPATCHER_SLEEP_MS=1000
-```
+   ```
+   BOT_PROCESSING_TIME_MS=10000
+   ```
 
-Adjust the values as needed for your environment.
+3. **Run the CLI application**
 
-### 3. Run the CLI application
+   ```bash
+   npm run start
+   ```
 
-```bash
-npm run start
-```
 
-You will see an interactive menu in your terminal.
+## CLI Usage
 
----
-
-## 🖥️ Usage (interactive CLI)
 ```
 --- MAIN MENU ---
 ? What would you like to do? (Use arrow keys)
@@ -110,18 +82,13 @@ You will see an interactive menu in your terminal.
 
 Orders are automatically dispatched to idle bots by the dispatcher service.
 
----
 
-## 🧩 Module & Singleton Design
+## Module & Singleton Design
 
 All core services (`OrderService`, `BotService`, `DispatcherService`) are provided as singletons via their respective modules.
-
-**Best Practice:**  
-- **Do NOT provide these services directly in multiple modules.**  
-- Instead, import their modules to ensure a single shared instance.
+**Import modules, not services directly.**
 
 **Example:**
-
 ```typescript
 // cli.module.ts
 @Module({
@@ -131,9 +98,7 @@ All core services (`OrderService`, `BotService`, `DispatcherService`) are provid
 export class CliModule {}
 ```
 
----
-
-## 🧪 Testing
+## Testing
 
 Run all unit tests:
 
@@ -141,33 +106,33 @@ Run all unit tests:
 npm run test
 ```
 
----
+Test files are located alongside their respective services, e.g.:
+- `src/bot/bot.service.spec.ts`
+- `src/order/order.service.spec.ts`
+- `src/dispatcher/dispatcher.service.spec.ts`
 
-## 📋 Logging
+## Logging
 
-- **Dispatcher and Bot logs:** Written to files via `FileLogger`
+- **Dispatcher and Bot logs:** Written to files via `FileLogger` (`src/common/fileLogger.ts`)
 - **CLI actions and status:** Printed to the console
 - **View logs in real time:**
 
-```bash
-tail -f logs/app.log
-```
+  ```bash
+  tail -f logs/app.log
+  ```
 
----
-
-## 📊 Example Output
+## Example Output
 
 ```
 --- MAIN MENU ---
 ✔ What would you like to do? Display
 ========================================
 
-
 🟡 PENDING ORDERS:
 ┌─────────┬─────┬──────────┬──────────────────────────┐
 │ (index) │ id  │ type     │ createdAt                │
 ├─────────┼─────┼──────────┼──────────────────────────┤
-│ 0       │ 105 │ 'NORMAL' │ 2025-08-12T13:13:41.963Z │
+│ 0       │ 102 │ 'NORMAL' │ 2025-08-12T13:13:41.963Z │
 └─────────┴─────┴──────────┴──────────────────────────┘
 
 🟢 COMPLETED ORDERS:
@@ -176,26 +141,16 @@ tail -f logs/app.log
 ├─────────┼─────┼──────────┼───────┼──────────────────────────┼──────────────────────────┼──────────────────────────┤
 │ 0       │ 101 │ 'VIP'    │ 1     │ 2025-08-12T13:12:44.277Z │ 2025-08-12T13:12:49.974Z │ 2025-08-12T13:12:59.976Z │
 │ 1       │ 100 │ 'NORMAL' │ 2     │ 2025-08-12T13:12:42.866Z │ 2025-08-12T13:12:52.552Z │ 2025-08-12T13:13:02.552Z │
-│ 2       │ 102 │ 'NORMAL' │ 1     │ 2025-08-12T13:12:58.401Z │ 2025-08-12T13:13:00.012Z │ 2025-08-12T13:13:10.014Z │
-│ 3       │ 103 │ 'VIP'    │ 2     │ 2025-08-12T13:13:00.045Z │ 2025-08-12T13:13:03.013Z │ 2025-08-12T13:13:13.013Z │
 └─────────┴─────┴──────────┴───────┴──────────────────────────┴──────────────────────────┴──────────────────────────┘
 
 BOTS:
 ┌─────────┬────┬────────┬─────────┬───────────┬──────────────────────────┐
 │ (index) │ id │ status │ orderId │ orderType │ orderProcessStartAt      │
 ├─────────┼────┼────────┼─────────┼───────────┼──────────────────────────┤
-│ 0       │ 1  │ 'BUSY' │ 104     │ 'VIP'     │ 2025-08-12T13:13:34.841Z │
+│ 0       │ 1  │ 'BUSY' │ 103     │ 'VIP'     │ 2025-08-12T13:13:34.841Z │
 └─────────┴────┴────────┴─────────┴───────────┴──────────────────────────┘
-
 ```
 
----
-
-## 📚 Resources
-
+## Resources
 - [NestJS Documentation](https://docs.nestjs.com)
 - [NestJS Devtools](https://devtools.nestjs.com)
-
----
-
-##
