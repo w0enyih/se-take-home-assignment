@@ -76,14 +76,18 @@ export class BotService {
 
         bot.currentOrder = order;
         bot.currentOrder.botId = bot.id;
-        bot.currentOrder.processStartAt = new Date();
+        
+        if (bot.currentOrder.processStartAt === undefined) {
+            bot.currentOrder.processStartAt = new Date();
+        }
+        
         bot.status = BotStatus.BUSY;
         this.logger.log(`Assigned order #${order.id} to bot ${bot.id}`);
 
         bot.timeout = setTimeout(() => {
             this.onJobComplete(bot);
             callback?.();
-        }, this.processTimeInMS);
+        }, order.processingTimeInMS);
     }
 
     onJobComplete(bot: Bot): void {

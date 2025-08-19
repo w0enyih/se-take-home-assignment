@@ -140,6 +140,7 @@ export class CliService {
                     orderId: bot?.currentOrder?.id,
                     orderType: bot?.currentOrder?.type,
                     orderProcessStartAt: bot?.currentOrder?.processStartAt,
+                    orderProcessingTimeInMS: bot?.currentOrder?.processingTimeInMS,
                 })),
             );
         }

@@ -2,10 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { Queue } from '../common/queue';
 import { Order, OrderStatus, OrderType } from './order.dto';
 import { FileLogger } from 'src/common/fileLogger';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class OrderService {
     private readonly logger = new FileLogger(`Order`);
+    private readonly processTimeInMS: number;
 
     // create a queue to hold orders for normal pending, VIP pending, and completed orders
     private normalQueue: Queue<Order> = new Queue<Order>();
@@ -15,6 +17,13 @@ export class OrderService {
     // counter to generate unique order IDs
     // this is a simple implementation, in a real-world application, might want to use a more robust ID generation strategy
     private orderIdCounter: number = 101;
+
+    constructor(private readonly configService: ConfigService) {
+        this.processTimeInMS = +this.configService.get<number>(
+            'bot.processingTimeInMS',
+            10000,
+        );
+    }
 
     addNormalOrder(): Order {
         return this.addOrder(OrderType.NORMAL);
@@ -30,6 +39,7 @@ export class OrderService {
             type: type,
             createdAt: new Date(),
             status: OrderStatus.PENDING,
+            processingTimeInMS: this.processTimeInMS
         };
 
         if (type === OrderType.VIP) {
@@ -66,8 +76,16 @@ export class OrderService {
     requeueOrder(order: Order): void {
         order.status = OrderStatus.PENDING;
         order.botId = undefined;
-        order.processStartAt = undefined;
         order.processEndAt = undefined;
+
+        if (order.processStartAt && order.processStartAt instanceof Date) {
+            // if the order was already started, calculate the remaining time
+            const spentTime = Date.now() - order.processStartAt.getTime();
+
+            if (typeof order.processingTimeInMS === 'number') {
+                order.processingTimeInMS -= spentTime;
+            } 
+        }
 
         if (order.type === OrderType.VIP) {
             this.vipQueue.enqueueTop(order);

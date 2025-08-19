@@ -16,6 +16,7 @@ export interface Order {
     type: OrderType;
     createdAt: Date;
     botId?: number;
+    processingTimeInMS?: number; // Optional, can be used to specify custom processing time
     processStartAt?: Date;
     processEndAt?: Date;
     status: OrderStatus;
